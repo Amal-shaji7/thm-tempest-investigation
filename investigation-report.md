@@ -76,7 +76,7 @@ across the full investigation period. This
 forms the primary analysis interface for 
 the endpoint investigation tasks that follow.
 
-![CSV file loaded in Timeline Explorer](./screenshots/task-1/ss6.png)
+![CSV file loaded in Timeline Explorer](./screenshots/task-1/Preparation-6.png)
 
 ---
 

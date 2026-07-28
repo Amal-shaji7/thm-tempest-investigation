@@ -78,8 +78,9 @@ Three artefacts were provided for analysis:
 
 ---
 
-##Repo Structure
+## Repository Structure
 
+```
 thm-tempest-investigation/
 ├── README.md
 ├── task-1-preparation/
@@ -96,6 +97,7 @@ thm-tempest-investigation/
 │   └── README.md
 └── task-7-persistence/
     └── README.md
+```
 
 ---
 

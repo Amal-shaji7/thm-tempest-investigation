@@ -46,7 +46,7 @@ hash for future verification.
 ```powershell
 Get-FileHash capture.pcapng
 Get-FileHash sysmon.evtx
-Get-FileHash <windows event log file>
+Get-FileHash windows.evtx
 ```
 
 ![SHA-256 hash of capture.pcapng](./screenshots/task-1/Preparation-2.png)

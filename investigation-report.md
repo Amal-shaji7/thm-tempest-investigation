@@ -49,8 +49,8 @@ Get-FileHash sysmon.evtx
 Get-FileHash <windows event log file>
 ```
 
-![SHA-256 hash of capture.pcapng](./screenshots/task-1/sPreparation-2.png)
-![SHA-256 hash of sysmon.evtx](./screenshots/task-1/sPreparation-3.png)
+![SHA-256 hash of capture.pcapng](./screenshots/task-1/Preparation-2.png)
+![SHA-256 hash of sysmon.evtx](./screenshots/task-1/Preparation-3.png)
 ![SHA-256 hash of Windows Event Log](./screenshots/task-1/Preparation-4.png)
 
 ---

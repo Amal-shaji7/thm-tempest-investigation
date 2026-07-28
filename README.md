@@ -83,20 +83,27 @@ Three artefacts were provided for analysis:
 ```
 thm-tempest-investigation/
 ├── README.md
-├── task-1-preparation/
-│   └── README.md
-├── task-2-initial-access/
-│   └── README.md
-├── task-3-initial-access-stage2/
-│   └── README.md
-├── task-4-c2-traffic/
-│   └── README.md
-├── task-5-discovery/
-│   └── README.md
-├── task-6-privilege-escalation/
-│   └── README.md
-└── task-7-persistence/
-    └── README.md
+├── investigation-report.md
+└── screenshots/
+    ├── task-1/
+    │   ├── ss1.png
+    │   ├── ss2.png
+    │   ├── ss3.png
+    │   ├── ss4.png
+    │   ├── ss5.png
+    │   └── ss6.png
+    ├── task-2/
+    │   └── ...
+    ├── task-3/
+    │   └── ...
+    ├── task-4/
+    │   └── ...
+    ├── task-5/
+    │   └── ...
+    ├── task-6/
+    │   └── ...
+    └── task-7/
+        └── ...
 ```
 
 ---

@@ -46,11 +46,11 @@ hash for future verification.
 ```powershell
 Get-FileHash capture.pcapng
 Get-FileHash sysmon.evtx
-Get-FileHash <windows event log file>
+Get-FileHash windows.evtx
 ```
 
-![SHA-256 hash of capture.pcapng](./screenshots/task-1/sPreparation-2.png)
-![SHA-256 hash of sysmon.evtx](./screenshots/task-1/sPreparation-3.png)
+![SHA-256 hash of capture.pcapng](./screenshots/task-1/Preparation-2.png)
+![SHA-256 hash of sysmon.evtx](./screenshots/task-1/Preparation-3.png)
 ![SHA-256 hash of Windows Event Log](./screenshots/task-1/Preparation-4.png)
 
 ---
@@ -76,7 +76,7 @@ across the full investigation period. This
 forms the primary analysis interface for 
 the endpoint investigation tasks that follow.
 
-![CSV file loaded in Timeline Explorer](./screenshots/task-1/ss6.png)
+![CSV file loaded in Timeline Explorer](./screenshots/task-1/Preparation-6.png)
 
 ---
 

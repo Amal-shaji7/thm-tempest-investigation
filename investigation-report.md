@@ -120,7 +120,7 @@ This returned the malicious document filename
 downloaded through the browser onto the 
 compromised machine.
 
-![Chrome.exe download activity in Timeline Explorer](./screenshots/task-2/ss1.png)
+![Chrome.exe download activity in Timeline Explorer](./screenshots/task-2/initial_access-1.png)
 
 ---
 
@@ -134,7 +134,7 @@ compromised endpoint. This established the
 scope of the compromise and confirmed which 
 account was affected.
 
-![Compromised username and machine name](./screenshots/task-2/ss2.png)
+![Compromised username and machine name](./screenshots/task-2/initial_access-2.png)
 
 ---
 
@@ -149,7 +149,7 @@ the document — PID 496. This PID became the
 central pivot point for all subsequent 
 investigation steps.
 
-![Microsoft Word PID 496](./screenshots/task-2/ss3.png)
+![Microsoft Word PID 496](./screenshots/task-2/initial_access-3.png)
 
 ---
 
@@ -183,7 +183,8 @@ the vulnerability being exploited — providing
 context around the affected software version 
 and the nature of the attack.
 
-![DNS query and Base64 encoded payload](./screenshots/task-2/ss4.png)
+![DNS query and Base64 encoded payload](./screenshots/task-2/initial_access-4.png)
+![CVE details](./screenshots/initial_access-5.png)
 
 ---
 

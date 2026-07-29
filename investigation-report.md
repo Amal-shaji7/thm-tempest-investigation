@@ -184,7 +184,7 @@ context around the affected software version
 and the nature of the attack.
 
 ![DNS query and Base64 encoded payload](./screenshots/task-2/initial_access-4.png)
-![CVE details](./screenshots/initial_access-5.png)
+![CVE details](./screenshots/task-2/initial_access-5.png)
 
 ---
 

@@ -234,8 +234,173 @@ investigation.
 
 ## Task 3 — Initial Access Stage 2
 
-*Coming soon*
+## Task 3 — Initial Access Stage 2
 
+### Overview
+
+Following the initial malicious document execution
+a second stage payload was deployed. This task
+traces the full Stage 2 execution chain including
+payload location, login-triggered execution command,
+binary identification, and C2 establishment.
+
+---
+
+### Investigation Process
+
+**Step 1 — Decoding the Base64 Payload**
+
+The Base64-encoded string identified in Task 2
+was decoded using CyberChef. Converting the 
+encoded string to human-readable text revealed 
+the actual command executed by the malicious 
+document, providing clear visibility into the
+attacker's intentions at this stage of the 
+attack chain.
+
+![CyberChef Base64 decode](./screenshots/task-3/ss1.png)
+
+---
+
+**Step 2 — Finding the Stage 2 Payload Path**
+
+To identify where the Stage 2 payload was
+written on the filesystem I applied the
+following filters in Timeline Explorer:
+
+- Username: `benimaru`
+- Event ID: `11` — File Create
+- Payload data: `startup`
+
+Sysmon Event ID 11 captures file creation
+events. Filtering on the username and the
+startup keyword returned the full target
+path where the Stage 2 payload was written
+on the compromised machine.
+
+![Stage 2 payload path — Event ID 11 filter](./screenshots/task-3/ss2.png)
+
+---
+
+**Step 3 — Identifying the Login-Triggered
+Execution Command**
+
+To find the command configured to execute
+automatically upon user login I applied the
+following filters in Timeline Explorer:
+
+- Username: `benimaru`
+- Event ID: `1` — Process Create
+- Payload 4: `explorer`
+
+Event ID 1 captures process creation events.
+Filtering on explorer as the parent process
+is significant because explorer.exe is the
+Windows shell — processes launched at login
+are typically spawned as children of
+explorer.exe. This filter returned the full
+command configured to execute automatically
+whenever the compromised user logged in.
+
+![Login-triggered execution command](./screenshots/task-3/ss3.png)
+
+---
+
+**Step 4 — Finding the SHA-256 Hash of the
+Stage 2 Binary**
+
+The payload path identified in Step 2 revealed
+the Stage 2 binary location:
+
+```
+C:\Users\Public\Downloads\first.exe
+```
+
+Using this path I applied the following
+filters in Timeline Explorer:
+
+- Username: `benimaru`
+- Executable info: `C:\Users\Public\Downloads\first.exe`
+
+This returned the SHA-256 hash of the
+malicious binary — confirming its identity
+and providing an IOC for threat intelligence
+lookups.
+
+![SHA-256 hash of Stage 2 binary](./screenshots/task-3/ss4.png)
+
+---
+
+**Step 5 — Identifying the C2 Domain and Port**
+
+Switching to Wireshark I analysed the network
+packet capture to identify the C2 domain and
+port used by the Stage 2 binary to communicate
+with the attacker's infrastructure.
+
+Network traffic analysis revealed:
+
+- **C2 Domain:** resolvecyber[.]xyz
+- **Port:** 80
+
+The use of port 80 is a deliberate evasion
+technique. HTTP traffic on port 80 blends with
+normal web browsing traffic making it
+significantly harder to detect through
+port-based network monitoring alone. Behavioural
+analysis and content inspection are required
+to identify malicious HTTP traffic of this type.
+
+![C2 domain and port in Wireshark](./screenshots/task-3/ss5.png)
+
+---
+
+### Tools Used
+
+| Tool | Purpose |
+|------|---------|
+| CyberChef | Base64 decoding of obfuscated payload |
+| Timeline Explorer | Filtering Sysmon events by Event ID, username, and payload data |
+| Sysmon Event ID 11 | File creation events — identifying Stage 2 payload path |
+| Sysmon Event ID 1 | Process creation events — identifying login-triggered command |
+| Wireshark | Network traffic analysis — C2 domain and port identification |
+
+---
+
+### Key Findings
+
+| Finding | Detail | Source |
+|---------|--------|--------|
+| Decoded payload | Human-readable attacker command | CyberChef |
+| Stage 2 payload path | Full filesystem path of dropped binary | Sysmon Event ID 11 |
+| Login-triggered command | Full command executing on user login | Sysmon Event ID 1 |
+| Stage 2 binary | first.exe | Sysmon file events |
+| Stage 2 binary SHA-256 | Confirmed hash of malicious binary | Timeline Explorer |
+| C2 domain | resolvecyber[.]xyz | Wireshark |
+| C2 port | 80 | Wireshark |
+
+---
+
+### Analyst Notes
+
+The choice of port 80 for C2 communication is
+a deliberate and common attacker technique.
+By routing malicious traffic over standard
+HTTP the attacker blends into normal network
+activity. This highlights why deep packet
+inspection and behavioural analysis are
+essential alongside traditional port-based
+firewall rules.
+
+Filtering on explorer.exe as the parent
+process for Event ID 1 was the key pivot
+in identifying the login-triggered command.
+Understanding Windows process hierarchy is
+fundamental to efficient Sysmon log
+investigation — knowing which processes
+spawn which children significantly narrows
+filter combinations and surfaces relevant
+events faster.
 ---
 
 ## Task 4 — C2 Traffic Analysis

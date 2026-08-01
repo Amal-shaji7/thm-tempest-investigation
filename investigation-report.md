@@ -401,6 +401,7 @@ investigation — knowing which processes
 spawn which children significantly narrows
 filter combinations and surfaces relevant
 events faster.
+
 ---
 
 ## Task 4 — C2 Traffic Analysis

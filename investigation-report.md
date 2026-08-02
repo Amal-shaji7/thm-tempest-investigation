@@ -406,7 +406,182 @@ events faster.
 
 ## Task 4 — C2 Traffic Analysis
 
-*Coming soon*
+
+
+### Overview
+
+This task focused entirely on network traffic
+analysis using Wireshark and CyberChef to
+identify the malicious payload delivery URL,
+C2 communication patterns, encoding methods,
+and the programming language used to compile
+the malicious binary.
+
+---
+
+### Investigation Process
+
+**Step 1 — Finding the Malicious Payload URL**
+
+Using Wireshark I applied the filter:
+
+```
+http
+```
+
+This filtered all HTTP traffic in the packet
+capture. Scanning through the results I
+identified a packet containing a reference
+to `free_magicules.doc` — the malicious
+document identified in Task 2. This packet
+confirmed the document was delivered over
+HTTP and provided the starting point for
+identifying the full delivery URL.
+
+![HTTP filter showing free_magicules.doc packet](./screenshots/task-4/ss1.png)
+
+---
+
+**Step 2 — Finding the Full Delivery URL**
+
+To find the full URL used to deliver the
+malicious document I applied the following
+Wireshark filter:
+
+```
+http.host
+```
+
+Filtering on the host associated with the
+document delivery returned the full URL
+including the host `phishteam.xyz` and
+confirmed the complete delivery path
+ending with `index.html`.
+
+![http.host filter results](./screenshots/task-4/ss2.png)
+
+![Full URL with index.html confirmed](./screenshots/task-4/ss3.png)
+
+---
+
+**Step 3 — Identifying C2 Encoding and
+Communication Parameters**
+
+To investigate the C2 communication from
+the Stage 2 binary I applied the following
+Wireshark filter:
+
+```
+http contains "resolvecyber"
+```
+
+This filtered all HTTP traffic containing
+references to `resolvecyber` — the C2
+domain identified in Task 3. Examining
+the resulting GET request revealed:
+
+- **Encoding used:** Base64 — the attacker
+  encoded C2 commands in Base64 to obfuscate
+  communication and evade content-based
+  detection
+- **Parameter used to execute commands:** `q`
+- **URL used by binary:** `/9ab62b5`
+- **HTTP method:** GET
+
+![resolvecyber HTTP GET request](./screenshots/task-4/ss4.png)
+
+---
+
+**Step 4 — Identifying the Programming Language**
+
+To gather more context about the malicious
+binary I right-clicked the relevant packet
+and selected **Follow TCP Stream**. Examining
+the full TCP stream content revealed that
+the binary was compiled using **Nim** — a
+systems programming language increasingly
+used by threat actors due to its ability
+to produce small, efficient executables
+that are less commonly detected by
+security tools.
+
+![TCP stream revealing Nim as programming language](./screenshots/task-4/ss5.png)
+
+---
+
+**Step 5 — Decoding the Encoded C2 Command**
+
+The Base64 encoded command found in the
+C2 GET request was extracted and decoded
+using CyberChef. The decoded output revealed
+the command being sent by the attacker
+through the C2 channel was:
+
+```
+whoami - benimaru
+```
+
+This is a standard attacker reconnaissance
+command used to confirm the identity and
+privilege level of the compromised account
+immediately after establishing C2
+communication.
+
+![CyberChef decoding Base64 command to whoami](./screenshots/task-4/ss6.png)
+
+---
+
+### Tools Used
+
+| Tool | Purpose |
+|------|---------|
+| Wireshark | HTTP traffic filtering and TCP stream analysis |
+| CyberChef | Base64 decoding of encoded C2 command |
+
+---
+
+### Key Findings
+
+| Finding | Detail | Source |
+|---------|--------|--------|
+| Malicious payload delivery host | phishteam.xyz | Wireshark http.host filter |
+| Full delivery URL | phishteam.xyz/index.html | Wireshark HTTP filter |
+| C2 encoding method | Base64 | Wireshark resolvecyber filter |
+| C2 command parameter | q | Wireshark GET request |
+| C2 URL path | /9ab62b5 | Wireshark GET request |
+| HTTP method | GET | Wireshark HTTP filter |
+| Binary programming language | Nim | Wireshark Follow TCP Stream |
+| Decoded C2 command | whoami | CyberChef |
+
+---
+
+### Analyst Notes
+
+The use of Base64 encoding for C2 commands
+over HTTP GET requests on port 80 is a
+deliberate layered evasion technique. The
+attacker combined three evasion methods
+simultaneously — standard HTTP protocol,
+common port 80, and encoded payloads — to
+blend malicious traffic with normal web
+browsing activity.
+
+The `whoami` command as the first C2
+instruction is consistent with standard
+attacker post-exploitation behaviour.
+Confirming the identity and privilege level
+of the compromised account is the first
+step before deciding which escalation or
+lateral movement technique to pursue next.
+
+The identification of Nim as the compilation
+language is a significant threat intelligence
+finding. Nim-compiled binaries are
+increasingly used by threat actors because
+they produce executables with lower detection
+rates against traditional antivirus and EDR
+solutions compared to more commonly flagged
+languages like C or PowerShell.
 
 ---
 

@@ -432,7 +432,7 @@ http
 This filtered all HTTP traffic in the packet
 capture. Scanning through the results I
 identified a packet containing a reference
-to `free_magicules.doc` — the malicious
+to `free_magicules.doc` - the malicious
 document identified in Task 2. This packet
 confirmed the document was delivered over
 HTTP and provided the starting point for
@@ -587,7 +587,183 @@ languages like C or PowerShell.
 
 ## Task 5 — Discovery
 
-*Coming soon*
+### Overview
+
+With C2 communication established the attacker
+conducted internal discovery on the compromised
+machine. This task traces how the attacker
+identified a sensitive file and its password,
+discovered a listening port providing remote
+shell access, established a reverse proxy
+using Chisel, and authenticated to the machine
+using a specific Windows service.
+
+---
+
+### Investigation Process
+
+**Step 1 — Finding the Sensitive File Password**
+
+Returning to Wireshark I applied the following
+combined filter to isolate C2 GET requests
+to the resolvecyber domain:
+
+```
+http.host == resolvecyber.xyz && http.request.method == "GET"
+```
+
+This returned a number of packets containing
+Base64 encoded commands sent through the C2
+channel. Each packet was extracted and decoded 
+individually using CyberChef. Working through
+the decoded outputs one by one I identified
+a specific packet whose decoded content
+contained a password — `infernotempest` —
+revealing the password of the sensitive file
+discovered by the attacker on the compromised
+machine.
+
+![Wireshark filter showing resolvecyber GET requests](./screenshots/task-5/ss1.png)
+
+![CyberChef decode revealing password infernotempest](./screenshots/task-5/ss2.png)
+
+---
+
+**Step 2 — Identifying the Listening Port**
+
+Continuing through the remaining encoded
+packets from the same Wireshark filter I
+identified another packet whose decoded
+content revealed a `netstat` command output.
+The decoded netstat results contained a list
+of active network connections, process IDs,
+and listening ports on the compromised machine.
+
+Analysing the output I identified the
+listening port providing remote shell access
+to the machine — PID 5985 — confirming an
+active listening service the attacker could
+use for remote access.
+
+![Wireshark packet containing encoded netstat output](./screenshots/task-5/ss3.png)
+
+![CyberChef decode revealing netstat results and PID 5985](./screenshots/task-5/ss4.png)
+
+---
+
+**Step 3 — Finding the Reverse Proxy Command
+and SHA-256 Hash**
+
+Returning to Timeline Explorer I searched for
+the reverse proxy activity. Filtering for the
+SOCKS reverse proxy command returned the full
+command executed by the attacker to establish
+the Chisel reverse proxy connection — providing
+complete visibility into how the attacker
+tunnelled their C2 traffic through the
+compromised machine.
+
+The same filter also returned the SHA-256
+hash of the Chisel binary directly from the
+Sysmon event data.
+
+![Timeline Explorer reverse proxy SOCKS command](./screenshots/task-5/ss5.png)
+
+![SHA-256 hash of Chisel binary in Timeline Explorer](./screenshots/task-5/ss6.png)
+
+---
+
+**Step 4 — Identifying the Tool Using VirusTotal**
+
+The SHA-256 hash of the binary was submitted
+to VirusTotal for threat intelligence lookup.
+The results confirmed the binary as **Chisel**
+— a legitimate open-source TCP and UDP
+tunnelling tool written in Go that is
+increasingly abused by threat actors to
+establish reverse proxy connections and
+tunnel C2 traffic through compromised
+endpoints.
+
+![VirusTotal results identifying Chisel](./screenshots/task-5/ss7.png)
+
+---
+
+**Step 5 — Identifying the Authentication Service**
+
+Returning to Timeline Explorer I searched for
+`wsmprovhost` — the Windows Remote Management
+(WinRM) provider host process. This process
+is associated with PowerShell remoting and
+WinRM-based authentication.
+
+The search confirmed that `wsmprovhost.exe`
+was the service used by the attacker to
+authenticate to the compromised machine —
+consistent with the listening port 5985
+identified in Step 2, which is the default
+WinRM HTTP port.
+
+![wsmprovhost authentication service in Timeline Explorer](./screenshots/task-5/ss8.png)
+
+---
+
+### Tools Used
+
+| Tool | Purpose |
+|------|---------|
+| Wireshark | HTTP GET request filtering to isolate C2 commands |
+| CyberChef | Base64 decoding of encoded C2 command outputs |
+| Timeline Explorer | Reverse proxy command and hash identification |
+| VirusTotal | Binary hash lookup confirming Chisel |
+
+---
+
+### Key Findings
+
+| Finding | Detail | Source |
+|---------|--------|--------|
+| Sensitive file password | infernotempest | Wireshark and CyberChef |
+| Listening port | 5985 | Wireshark netstat decode via CyberChef |
+| Reverse proxy command | Full SOCKS command recovered | Timeline Explorer |
+| Chisel binary SHA-256 | Confirmed hash | Timeline Explorer |
+| Tool name | Chisel | VirusTotal |
+| Authentication service | wsmprovhost — WinRM | Timeline Explorer |
+
+---
+
+### Analyst Notes
+
+The methodology of iterating through multiple
+Base64 encoded C2 packets and decoding each
+one individually was time consuming but
+essential. The attacker sent multiple commands
+through the C2 channel and the sensitive
+findings — the file password and the netstat
+output — were not immediately obvious without
+working through all of them systematically.
+
+The identification of port 5985 alongside
+wsmprovhost.exe is significant. Port 5985
+is the default WinRM HTTP port used for
+PowerShell remoting. The attacker leveraged
+WinRM as their authentication mechanism —
+a legitimate Windows service — to avoid
+raising suspicion. This is another example
+of living-off-the-land technique where
+built-in Windows services are abused for
+malicious purposes.
+
+The use of Chisel for reverse proxy
+establishment is consistent with real-world
+threat actor TTPs. By tunnelling C2 traffic
+through a legitimate-looking TCP connection
+the attacker significantly reduces the
+likelihood of detection through standard
+network monitoring. Detection requires
+behavioural analysis — specifically looking
+for unusual outbound connections from
+unexpected processes.
 
 ---
 

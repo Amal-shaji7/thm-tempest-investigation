@@ -739,16 +739,16 @@ Base64 encoded C2 packets and decoding each
 one individually was time consuming but
 essential. The attacker sent multiple commands
 through the C2 channel and the sensitive
-findings — the file password and the netstat
-output — were not immediately obvious without
+findings, the file password and the netstat
+output were not immediately obvious without
 working through all of them systematically.
 
 The identification of port `5985` alongside
-wsmprovhost.exe is significant. Port 5985
+wsmprovhost.exe is significant. Port `5985`
 is the default WinRM HTTP port used for
 PowerShell remoting. The attacker leveraged
-WinRM as their authentication mechanism —
-a legitimate Windows service — to avoid
+WinRM as their authentication mechanism 
+a legitimate Windows service used to avoid
 raising suspicion. This is another example
 of living-off-the-land technique where
 built-in Windows services are abused for
@@ -757,9 +757,9 @@ malicious purposes.
 The use of Chisel for reverse proxy
 establishment is consistent with real-world
 threat actor TTPs. By tunnelling C2 traffic
-through a legitimate-looking TCP connection
-the attacker significantly reduces the
-likelihood of detection through standard
+through a legitimate looking TCP connection, 
+the attacker significantly reduces the 
+likelihood of detection through standard 
 network monitoring. Detection requires
 behavioural analysis — specifically looking
 for unusual outbound connections from

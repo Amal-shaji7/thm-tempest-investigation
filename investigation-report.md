@@ -743,7 +743,7 @@ findings — the file password and the netstat
 output — were not immediately obvious without
 working through all of them systematically.
 
-The identification of port 5985 alongside
+The identification of port `5985` alongside
 wsmprovhost.exe is significant. Port 5985
 is the default WinRM HTTP port used for
 PowerShell remoting. The attacker leveraged

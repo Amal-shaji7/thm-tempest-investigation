@@ -234,8 +234,6 @@ investigation.
 
 ## Task 3 — Initial Access Stage 2
 
-## Task 3 — Initial Access Stage 2
-
 ### Overview
 
 Following the initial malicious document execution
@@ -256,33 +254,17 @@ encoded string to human-readable text revealed
 the actual command executed by the malicious 
 document, providing clear visibility into the
 attacker's intentions at this stage of the 
-attack chain.
+attack chain. The decoded output
+directly answered the first question of 
+the full target path of the payload written to 
+the filesystem by the malicious document 
+execution.
 
-![CyberChef Base64 decode](./screenshots/task-3/ss1.png)
-
----
-
-**Step 2 — Finding the Stage 2 Payload Path**
-
-To identify where the Stage 2 payload was
-written on the filesystem I applied the
-following filters in Timeline Explorer:
-
-- Username: `benimaru`
-- Event ID: `11` — File Create
-- Payload data: `startup`
-
-Sysmon Event ID 11 captures file creation
-events. Filtering on the username and the
-startup keyword returned the full target
-path where the Stage 2 payload was written
-on the compromised machine.
-
-![Stage 2 payload path — Event ID 11 filter](./screenshots/task-3/ss2.png)
+![CyberChef Base64 decode revealing payload path](./screenshots/task-3/ss1.png)
 
 ---
 
-**Step 3 — Identifying the Login-Triggered
+**Step 2 — Identifying the Login-Triggered
 Execution Command**
 
 To find the command configured to execute
@@ -302,11 +284,11 @@ explorer.exe. This filter returned the full
 command configured to execute automatically
 whenever the compromised user logged in.
 
-![Login-triggered execution command](./screenshots/task-3/ss3.png)
+![Login-triggered execution command](./screenshots/task-3/ss2.png)
 
 ---
 
-**Step 4 — Finding the SHA-256 Hash of the
+**Step 3 — Finding the SHA-256 Hash of the
 Stage 2 Binary**
 
 The payload path identified in Step 2 revealed
@@ -323,18 +305,25 @@ filters in Timeline Explorer:
 - Executable info: `C:\Users\Public\Downloads\first.exe`
 
 This returned the SHA-256 hash of the
-malicious binary — confirming its identity
+malicious binary, confirming its identity
 and providing an IOC for threat intelligence
 lookups.
 
-![SHA-256 hash of Stage 2 binary](./screenshots/task-3/ss4.png)
-
 ---
 
-**Step 5 — Identifying the C2 Domain and Port**
+**Step 4 — Identifying the C2 Domain and Port**
 
-Switching to Wireshark I analysed the network
-packet capture to identify the C2 domain and
+Further analysis of the Sysmon events returned
+the query name associated with the C2
+communication established by the Stage 2
+binary, confirming the domain used by
+`first.exe` to reach back to the attacker 
+infrastructure.
+
+![C2 domain in Timeline](./screenshots/task-3/ss3.png)
+
+And then, switching to Wireshark, I analysed the network
+packet capture to confirm the C2 domain and
 port used by the Stage 2 binary to communicate
 with the attacker's infrastructure.
 
@@ -351,7 +340,6 @@ port-based network monitoring alone. Behavioural
 analysis and content inspection are required
 to identify malicious HTTP traffic of this type.
 
-![C2 domain and port in Wireshark](./screenshots/task-3/ss5.png)
 
 ---
 
@@ -363,7 +351,7 @@ to identify malicious HTTP traffic of this type.
 | Timeline Explorer | Filtering Sysmon events by Event ID, username, and payload data |
 | Sysmon Event ID 11 | File creation events — identifying Stage 2 payload path |
 | Sysmon Event ID 1 | Process creation events — identifying login-triggered command |
-| Wireshark | Network traffic analysis — C2 domain and port identification |
+| Wireshark | Network traffic analysis — C2 domain confirmation and port identification |
 
 ---
 
@@ -401,6 +389,7 @@ investigation — knowing which processes
 spawn which children significantly narrows
 filter combinations and surfaces relevant
 events faster.
+
 
 ---
 

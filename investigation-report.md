@@ -691,9 +691,9 @@ endpoints.
 
 **Step 5 — Identifying the Authentication Service**
 
-Returning to Timeline Explorer I searched for
+Returning to Timeline Explorer, I searched for
 `wsmprovhost` — the Windows Remote Management
-(WinRM) provider host process. This process
+(WinRM) provider host process. This process 
 is associated with PowerShell remoting and
 WinRM-based authentication.
 
@@ -754,25 +754,400 @@ of living-off-the-land technique where
 built-in Windows services are abused for
 malicious purposes.
 
-The use of Chisel for reverse proxy
+The use of Chisel for reverse proxy 
 establishment is consistent with real-world
-threat actor TTPs. By tunnelling C2 traffic
-through a legitimate looking TCP connection, 
+threat actor TTPs. By tunnelling C2 traffic 
+through a legitimate-looking TCP connection, 
 the attacker significantly reduces the 
 likelihood of detection through standard 
-network monitoring. Detection requires
-behavioural analysis — specifically looking
-for unusual outbound connections from
+network monitoring. Detection requires 
+behavioural analysis — specifically looking 
+for unusual outbound connections from 
 unexpected processes.
 
 ---
 
 ## Task 6 — Privilege Escalation
 
-*Coming soon*
+### Overview
+
+With an established foothold, the attacker moved 
+to escalate privileges on the compromised machine. 
+This task traces the full privilege escalation 
+chain, from binary download and identification 
+through to privilege abuse and elevated C2
+port discovery.
+
+---
+
+### Investigation Process
+
+**Step 1 — Finding the Privilege Escalation 
+Binary Name and Hash**
+
+Returning to Timeline Explorer, I searched for
+`wsmprovhost` in the find filter. This pivoted 
+from the authentication service identified in 
+Task 5 and revealed subsequent process activity 
+spawned under that context.
+
+The results showed the attacker executed a 
+download command retrieving a binary named
+`spf.exe` onto the compromised machine. The 
+same Sysmon event data also contained the
+SHA-256 hash of the downloaded binary, 
+providing an immediate IOC for threat 
+intelligence lookup.
+
+![Timeline Explorer wsmprovhost filter showing spf.exe download and hash](./screenshots/task-6/ss1.png)
+
+---
+
+**Step 2 — Identifying the Tool Using VirusTotal**
+
+The SHA-256 hash of `spf.exe` was submitted 
+to VirusTotal for threat intelligence lookup. 
+The results confirmed the binary as ** PrintSpoofer **, a well-known privilege-
+escalation tool developed by itm4n that 
+abuses impersonation privileges through 
+the Windows printer spooler service.
+
+![VirusTotal results identifying PrintSpoofer](./screenshots/task-6/ss2.png)
+
+---
+
+**Step 3 — Identifying the Abused Privilege**
+
+To understand the specific Windows privilege 
+exploited for escalation, I conducted a Google 
+search and reviewed the PrintSpoofer GitHub 
+repository by itm4n. The repository confirmed 
+that PrintSpoofer specifically abuses the ** SeImpersonatePrivilege **, a Windows token 
+privilege that allows a process to impersonate 
+another user's security context.
+
+SeImpersonatePrivilege is commonly assigned
+to service accounts and is frequently found
+on compromised machines where the initial
+access was achieved through a web application
+or service running under a limited account.
+PrintSpoofer exploits this privilege to 
+impersonate the SYSTEM account, achieving 
+full administrative control of the machine.
+
+---
+
+**Step 4 — Finding the C2 Port Used by
+the Elevated Binary**
+
+To identify the port used by the attacker 
+for the elevated C2 connection, I returned
+to Wireshark and applied the following 
+combined filter:
+
+```
+http && ip.src == 167.71.222.162
+```
+
+This filtered HTTP traffic originating from 
+the attacker's IP address. I then added
+**Source Port** as a column in Wireshark 
+to surface the port information directly 
+in the packet list view. Examining the 
+filtered results confirmed the elevated
+C2 connection was operating on port **8080**.
+
+![Wireshark filter showing elevated C2 on port 8080](./screenshots/task-6/ss3.png)
+
+---
+
+### Tools Used
+
+| Tool | Purpose |
+|------|---------|
+| Timeline Explorer | wsmprovhost pivot to identify spf.exe download and SHA-256 hash |
+| VirusTotal | Hash lookup confirming PrintSpoofer |
+| Google and GitHub research | SeImpersonatePrivilege identification and PrintSpoofer methodology |
+| Wireshark | HTTP traffic filtering to identify elevated C2 port |
+
+---
+
+### Key Findings
+
+| Finding | Detail | Source |
+|---------|--------|--------|
+| Privilege escalation binary | spf.exe | Timeline Explorer |
+| Binary SHA-256 hash | Confirmed hash | Timeline Explorer |
+| Tool name | PrintSpoofer | VirusTotal |
+| Tool author | itm4n | GitHub research |
+| Abused privilege | SeImpersonatePrivilege | GitHub and Google research |
+| Elevated C2 port | 8080 | Wireshark |
+
+---
+
+### Analyst Notes
+
+The pivot from `wsmprovhost` identified in 
+Task 5 directly into the privilege escalation 
+activity in this task demonstrates the value 
+of maintaining a consistent investigation 
+thread across tasks. Rather than starting 
+fresh each task, carrying forward known 
+process names and pivoting from them 
+significantly accelerates the investigation.
+
+The use of PrintSpoofer is consistent with
+real-world post-exploitation TTPs. It is 
+a widely known tool but remains effective 
+because SeImpersonatePrivilege is frequently 
+present on compromised service accounts. 
+Monitoring for the creation and execution 
+of known privilege escalation binaries 
+through Sysmon process creation events 
+and hash-based detection rules would catch 
+this activity before escalation succeeds.
+
+The shift from port 80 in Task 3 to port
+8080 in this task is notable. After 
+escalating privileges, the attacker established 
+a new elevated C2 channel on a different port, likely to separate privileged 
+communications from the initial lower-
+privilege C2 session and reduce the risk 
+of both being detected and blocked 
+simultaneously.
 
 ---
 
 ## Task 7 — Persistence
 
-*Coming soon*
+### Overview
+
+The final phase of the investigation covers 
+how the attacker ensured continued access 
+to the compromised machine. This task 
+identifies the new accounts created by the 
+attacker, the commands used to add them to 
+privileged groups, and the mechanism used 
+to establish persistent administrative 
+access through a Windows service.
+
+---
+
+### Investigation Process
+
+**Step 1 — Identifying the Accounts Created 
+by the Attacker**
+
+To identify the new accounts created by the attacker, I applied the following filters in 
+Timeline Explorer:
+
+- Event ID: `1` — Process Create
+- Parent command: `file.exe`
+
+This returned two process creation events 
+showing commands executed to add two new 
+local user accounts to the compromised 
+machine. The two accounts created were:
+
+- **shion**
+- **shuna**
+
+The commands also revealed that one of the
+account creation attempts had a missing
+`/add` option, confirming the attacker
+made an error during the account creation 
+process.
+
+![Timeline Explorer showing two user creation commands](./screenshots/task-7/ss1.png)
+
+---
+
+**Step 2 — Finding the Group Addition Command**
+
+To identify which account was added to the 
+local administrators group I applied the 
+following filters in Timeline Explorer:
+
+- Event ID: `1` — Process Create
+- Parent command: `file.exe`
+- Username: `system`
+
+Filtering on the SYSTEM username was key 
+here — commands executed with SYSTEM-level 
+privileges following the privilege escalation 
+in Task 6 would run under the SYSTEM context. 
+This filter returned the command used to add 
+one of the newly created accounts to the 
+local administrators group:
+
+```
+net localgroup administrators /add shion
+```
+
+The associated Windows Event ID for a sensitive 
+local group addition is **4732**, confirming 
+a member was added to a security-enabled
+local group.
+
+![Timeline Explorer showing net localgroup administrators command](./screenshots/task-7/ss2.png)
+
+---
+
+**Step 3 — Identifying the Persistent 
+Administrative Access Mechanism**
+
+To find how the attacker established 
+persistent administrative access, I used
+`final.exe` as a search filter in Timeline 
+Explorer. This returned the full command 
+executed by the attacker to create a 
+persistent Windows service:
+
+```
+C:\Windows\system32\sc.exe \\TEMPEST create 
+TempestUpdate2 binpath= C:\ProgramData\final.exe 
+start= auto
+```
+
+Breaking this command down:
+
+- `sc.exe` — Windows Service Control Manager
+  utility used to create, modify, and manage
+  Windows services
+- `\\TEMPEST` — the target machine name
+- `create TempestUpdate2` — creates a new
+  service named TempestUpdate2 — disguised
+  as a legitimate update service
+- `binpath= C:\ProgramData\final.exe` — sets
+  the service binary to the attacker's
+  malicious executable
+- `start= auto` — configures the service to
+  start automatically on every system boot
+
+This mechanism ensures `final.exe` executes 
+automatically every time the machine boots, providing the attacker with persistent 
+elevated access that survives reboots, 
+credential resets, and session terminations.
+
+The associated Windows Event IDs relevant 
+to account creation and group modification 
+are:
+
+| Event ID | Description |
+|----------|-------------|
+| 4720 | A user account was created |
+| 4732 | A member was added to a security-enabled local group |
+
+![Timeline Explorer final.exe filter showing persistent service creation command](./screenshots/task-7/ss3.png)
+
+---
+
+### Tools Used
+
+| Tool | Purpose |
+|------|---------|
+| Timeline Explorer | Event ID and process filter pivoting to identify account creation, group addition, and persistence commands |
+
+---
+
+### Key Findings
+
+| Finding | Detail | Source |
+|---------|--------|--------|
+| New accounts created | shion and shuna | Timeline Explorer — Event ID 1, parent file.exe |
+| Failed command | Missing /add option in account creation | Timeline Explorer |
+| Account creation Event ID | 4720 | Windows Security Event Logs |
+| Group addition command | net localgroup administrators /add shion | Timeline Explorer — System filter |
+| Group addition Event ID | 4732 | Windows Security Event Logs |
+| Persistence command | sc.exe create TempestUpdate2 binpath= final.exe start= auto | Timeline Explorer — final.exe filter |
+| Persistence mechanism | Windows service configured to auto-start on boot | Timeline Explorer |
+
+---
+
+### Analyst Notes
+
+The naming of the persistence service as
+`TempestUpdate2` is a deliberate masquerading 
+technique. By naming the malicious service 
+to resemble a legitimate system update process, the attacker reduces the likelihood 
+of the service being noticed during a 
+casual review of running services. This 
+highlights why monitoring for new service 
+creation events, particularly those 
+pointing to binaries in non-standard paths 
+like `C:\ProgramData\`, is a critical 
+detection capability in any SOC environment.
+
+The combination of account creation, 
+group elevation, and service-based persistence 
+represents a comprehensive persistence 
+strategy. Even if the initial malicious 
+binary is detected and removed, the attacker 
+retains access through the created accounts. 
+Even if the accounts are removed, the service 
+restarts the malware on next boot. Effective 
+remediation requires addressing all three 
+persistence mechanisms simultaneously.
+
+The error in the account creation command
+— the missing `/add` option is another noteworthy human element. Even sophisticated 
+attackers make mistakes. These errors often 
+leave additional artifacts in logs that can 
+help investigators reconstruct the attack 
+timeline more completely.
+
+---
+
+## Investigation Summary
+
+This investigation successfully reconstructed
+the complete attack chain across all seven
+phases of the Tempest compromise.
+
+| Task | Phase | Key Finding |
+|------|-------|-------------|
+| 1 | Preparation | Artefacts verified and analysis environment prepared |
+| 2 | Initial Access | free_magicules.doc delivered via Chrome — PID 496 pivot |
+| 3 | Stage 2 | first.exe dropped — C2 to resolvecyber.xyz on port 80 |
+| 4 | C2 Traffic | Base64 encoded commands over HTTP GET — Nim compiled binary |
+| 5 | Discovery | Password infernotempest — Chisel reverse proxy — WinRM auth |
+| 6 | Privilege Escalation | PrintSpoofer abusing SeImpersonatePrivilege — port 8080 |
+| 7 | Persistence | Two accounts created — shion admin — TempestUpdate2 service |
+
+---
+
+### Defensive Recommendations
+
+**1. Email and document security**
+Implement sandboxed analysis of all 
+downloaded documents. A single malicious
+.doc file initiated the entire compromise.
+
+**2. Monitor Event ID 4720 and 4732**
+New account creation and group membership 
+changes should trigger immediate high-
+priority alerts in any SIEM deployment.
+
+**3. Monitor service creation**
+Alert on new Windows service creation, particularly services with binaries located 
+in non-standard paths such as C:\ProgramData \ or C:\Users\Public\.
+
+**4. Restrict SeImpersonatePrivilege**
+Audit which accounts hold 
+SeImpersonatePrivilege and remove it 
+where not explicitly required. This 
+directly mitigates PrintSpoofer and 
+similar token impersonation attacks.
+
+**5. Behavioural detection for Chisel
+and tunnelling tools**
+Signature-based detection alone will not 
+catch Chisel. Implement behavioural rules 
+alerting on unusual outbound connections 
+from non-browser processes on standard 
+HTTP ports.
+
+---
+
+*Investigation completed by Amal Shaji*
+*TryHackMe SOC Level 1 Capstone — Tempest*

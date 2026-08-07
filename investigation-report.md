@@ -644,7 +644,7 @@ Returning to Timeline Explorer, I searched for
 the reverse proxy activity. Filtering for the 
 SOCKS reverse proxy command returned the full 
 command executed by the attacker to establish 
-the Chisel reverse proxy connection — providing 
+the Chisel reverse proxy connection, providing 
 complete visibility into how the attacker 
 tunnelled their C2 traffic through the 
 compromised machine.
@@ -663,8 +663,7 @@ The SHA-256 hash of the binary was submitted
 to VirusTotal for threat intelligence lookup. 
 The results confirmed the binary as **Chisel**
 — a legitimate open-source TCP and UDP 
-tunnelling tool written in Go that is 
-increasingly abused by threat actors to 
+tunnelling tool written in Go that threat actors increasingly abuse to 
 establish reverse proxy connections and 
 tunnel C2 traffic through compromised 
 endpoints.
@@ -676,7 +675,7 @@ endpoints.
 **Step 5 — Identifying the Authentication Service**
 
 Returning to Timeline Explorer, I searched for
-`wsmprovhost` — the Windows Remote Management
+`wsmprovhost` , the Windows Remote Management
 (WinRM) provider host process. This process 
 is associated with PowerShell remoting and
 WinRM-based authentication.
@@ -730,7 +729,7 @@ The identification of port `5985` alongside
 wsmprovhost.exe is significant. Port `5985`
 is the default WinRM HTTP port used for 
 PowerShell remoting. The attacker leveraged 
-WinRM as their authentication mechanism 
+WinRM as their authentication mechanism, 
 a legitimate Windows service used to avoid 
 raising suspicion. This is another example of a living-off-the-land technique where
 built-in Windows services are abused for 

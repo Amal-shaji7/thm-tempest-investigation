@@ -803,7 +803,7 @@ To understand the specific Windows privilege
 exploited for escalation, I conducted a Google 
 search and reviewed the PrintSpoofer GitHub 
 repository by itm4n. The repository confirmed 
-that PrintSpoofer specifically abuses the ** SeImpersonatePrivilege **, a Windows token 
+that PrintSpoofer specifically abuses the **SeImpersonatePrivilege**, a Windows token 
 privilege that allows a process to impersonate 
 another user's security context.
 

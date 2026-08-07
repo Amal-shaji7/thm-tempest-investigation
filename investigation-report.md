@@ -22,7 +22,7 @@ fundamental step in any DFIR engagement.
 ### Artifacts Received
 
 The first step was listing the contents of 
-the provided directory to confirm all three artefacts were present and accounted for.
+the provided directory to confirm all three artifacts were present and accounted for.
 
 ![Directory contents listing](./screenshots/task-1/Preparation-1.png)
 
@@ -36,7 +36,7 @@ the provided directory to confirm all three artefacts were present and accounted
 
 ### Hash Verification
 
-SHA-256 hashes were generated for all three
+SHA-256 hashes were generated for all three 
 artifacts using PowerShell's Get-FileHash
 command. This confirms the integrity of each 
 file, ensuring no tampering has occurred 
@@ -101,8 +101,8 @@ confirmed the intrusion originated from a
 malicious document with the following known 
 information:
 
-- The malicious document has a .doc extension
-- The user downloaded it via chrome.exe
+- The malicious document has a .doc extension.
+- The user downloaded it via chrome.exe.
 - The document executed a chain of commands
   to attain code execution
 
@@ -140,7 +140,7 @@ account was affected.
 
 **Step 3 — Identifying the Microsoft Word PID**
 
-The malicious document was opened in Microsoft
+The malicious document was opened in Microsoft 
 Word. Filtering Timeline Explorer for Word 
 process creation events associated with
 `free_magicules.doc` returned the Process ID 
@@ -179,7 +179,7 @@ To understand the exploitation technique used
 by the malicious document, I searched for the 
 CVE associated with SysWOW64\msdt.exe. This 
 returned the specific CVE number and confirmed 
-the vulnerability being exploited — providing 
+the vulnerability being exploited, providing 
 context around the affected software version 
 and the nature of the attack.
 
@@ -214,20 +214,20 @@ and the nature of the attack.
 
 ### Analyst Notes
 
-The use of PID 496 as a pivot point across
-multiple filter combinations was the key
-methodology in this task. Rather than searching
-broadly across all events, anchoring filters
-to the known PID of the Word process that
-opened the malicious document significantly
-narrowed results and surfaced the relevant
+The use of PID 496 as a pivot point across 
+multiple filter combinations was the key 
+methodology in this task. Rather than searching 
+broadly across all events, anchoring filters 
+to the known PID of the Word process that 
+opened the malicious document significantly 
+narrowed results and surfaced the relevant 
 DNS and payload events quickly.
 
-The Base64 encoding of the payload is a
-classic obfuscation technique. Encoded
-commands pass through many content filters
-undetected — decoding them is a standard
-step in any document-based malware
+The Base64 encoding of the payload is a 
+classic obfuscation technique. Encoded 
+commands pass through many content filters 
+undetected; decoding them is a standard 
+step in any document-based malware 
 investigation.
 
 ---
@@ -237,9 +237,9 @@ investigation.
 ### Overview
 
 Following the initial malicious document execution
-a second stage payload was deployed. This task
-traces the full Stage 2 execution chain including
-payload location, login-triggered execution command,
+a second stage payload was deployed. This task 
+traces the full Stage 2 execution chain including 
+payload location, login-triggered execution command, 
 binary identification, and C2 establishment.
 
 ---
@@ -254,37 +254,37 @@ encoded string to human-readable text revealed
 the actual command executed by the malicious 
 document, providing clear visibility into the
 attacker's intentions at this stage of the 
-attack chain. The decoded output
+attack chain. The decoded output 
 directly answered the first question of 
 the full target path of the payload written to 
 the filesystem by the malicious document 
 execution.
 
-![CyberChef Base64 decode revealing payload path](./screenshots/task-3/ss1.png)
+![CyberChef Base64 decode revealing payload path](./screenshots/task-3/task3-1.png)
 
 ---
 
 **Step 2 — Identifying the Login-Triggered
 Execution Command**
 
-To find the command configured to execute
-automatically upon user login I applied the
+To find the command configured to execute 
+automatically upon user login, I applied the 
 following filters in Timeline Explorer:
 
 - Username: `benimaru`
 - Event ID: `1` — Process Create
 - Payload 4: `explorer`
 
-Event ID 1 captures process creation events.
-Filtering on explorer as the parent process
-is significant because explorer.exe is the
-Windows shell — processes launched at login
-are typically spawned as children of
-explorer.exe. This filter returned the full
-command configured to execute automatically
+Event ID 1 captures process creation events. 
+Filtering on explorer as the parent process 
+is significant because explorer.exe is the 
+Windows shell; processes launched at login 
+are typically spawned as children of 
+explorer.exe. This filter returned the full 
+command configured to execute automatically 
 whenever the compromised user logged in.
 
-![Login-triggered execution command](./screenshots/task-3/ss2.png)
+![Login-triggered execution command](./screenshots/task-3/task3-2.png)
 
 ---
 
@@ -304,27 +304,27 @@ filters in Timeline Explorer:
 - Username: `benimaru`
 - Executable info: `C:\Users\Public\Downloads\first.exe`
 
-This returned the SHA-256 hash of the
-malicious binary, confirming its identity
-and providing an IOC for threat intelligence
+This returned the SHA-256 hash of the 
+malicious binary, confirming its identity 
+and providing an IOC for threat intelligence 
 lookups.
 
 ---
 
 **Step 4 — Identifying the C2 Domain and Port**
 
-Further analysis of the Sysmon events returned
+Further analysis of the Sysmon events returned 
 the query name associated with the C2
 communication established by the Stage 2
 binary, confirming the domain used by
 `first.exe` to reach back to the attacker 
 infrastructure.
 
-![C2 domain in Timeline](./screenshots/task-3/ss3.png)
+![C2 domain in Timeline](./screenshots/task-3/task3-3.png)
 
-And then, switching to Wireshark, I analysed the network
-packet capture to confirm the C2 domain and
-port used by the Stage 2 binary to communicate
+And then, switching to Wireshark, I analysed the network 
+packet capture to confirm the C2 domain and 
+port used by the Stage 2 binary to communicate 
 with the attacker's infrastructure.
 
 Network traffic analysis revealed:
@@ -332,12 +332,12 @@ Network traffic analysis revealed:
 - **C2 Domain:** resolvecyber[.]xyz
 - **Port:** 80
 
-The use of port 80 is a deliberate evasion
-technique. HTTP traffic on port 80 blends with
-normal web browsing traffic making it
+The use of port 80 is a deliberate evasion 
+technique. HTTP traffic on port 80 blends with 
+normal web browsing traffic, making it 
 significantly harder to detect through
-port-based network monitoring alone. Behavioural
-analysis and content inspection are required
+port-based network monitoring alone. Behavioural 
+analysis and content inspection are required 
 to identify malicious HTTP traffic of this type.
 
 
@@ -371,23 +371,22 @@ to identify malicious HTTP traffic of this type.
 
 ### Analyst Notes
 
-The choice of port 80 for C2 communication is
-a deliberate and common attacker technique.
-By routing malicious traffic over standard
-HTTP the attacker blends into normal network
-activity. This highlights why deep packet
-inspection and behavioural analysis are
+The choice of port 80 for C2 communication is 
+a deliberate and common attacker technique. 
+By routing malicious traffic over standard HTTP, the attacker blends into normal network 
+activity. This highlights why deep packet 
+inspection and behavioural analysis are 
 essential alongside traditional port-based
 firewall rules.
 
-Filtering on explorer.exe as the parent
-process for Event ID 1 was the key pivot
-in identifying the login-triggered command.
-Understanding Windows process hierarchy is
+Filtering on explorer.exe as the parent 
+process for Event ID 1 was the key pivot 
+in identifying the login-triggered command. 
+Understanding Windows process hierarchy is 
 fundamental to efficient Sysmon log
-investigation — knowing which processes
-spawn which children significantly narrows
-filter combinations and surfaces relevant
+in investigation; knowing which processes 
+spawn which children significantly narrows 
+filter combinations and surfaces relevant 
 events faster.
 
 
@@ -399,11 +398,11 @@ events faster.
 
 ### Overview
 
-This task focused entirely on network traffic
-analysis using Wireshark and CyberChef to
-identify the malicious payload delivery URL,
-C2 communication patterns, encoding methods,
-and the programming language used to compile
+This task focused entirely on network traffic 
+analysis using Wireshark and CyberChef to 
+identify the malicious payload delivery URL, 
+C2 communication patterns, encoding methods, 
+and the programming language used to compile 
 the malicious binary.
 
 ---
@@ -412,61 +411,61 @@ the malicious binary.
 
 **Step 1 — Finding the Malicious Payload URL**
 
-Using Wireshark I applied the filter:
+Using Wireshark, I applied the filter:
 
 ```
 http
 ```
 
-This filtered all HTTP traffic in the packet
-capture. Scanning through the results I
-identified a packet containing a reference
-to `free_magicules.doc` - the malicious
-document identified in Task 2. This packet
-confirmed the document was delivered over
-HTTP and provided the starting point for
+This filtered all HTTP traffic in the packet 
+capture. Scanning through the results, I 
+identified a packet containing a reference 
+to `free_magicules.doc`, the malicious 
+document identified in Task 2. This packet 
+confirmed the document was delivered over 
+HTTP and provided the starting point for 
 identifying the full delivery URL.
 
-![HTTP filter showing free_magicules.doc packet](./screenshots/task-4/ss1.png)
+![HTTP filter showing free_magicules.doc packet](./screenshots/task-4/task4-1.png)
 
 ---
 
 **Step 2 — Finding the Full Delivery URL**
 
-To find the full URL used to deliver the
-malicious document I applied the following
+To find the full URL used to deliver the 
+malicious document, I applied the following 
 Wireshark filter:
 
 ```
 http.host
 ```
 
-Filtering on the host associated with the
-document delivery returned the full URL
-including the host `phishteam.xyz` and
-confirmed the complete delivery path
+Filtering on the host associated with the 
+document delivery returned the full URL 
+including the host `phishteam.xyz` and 
+confirmed the complete delivery path 
 ending with `index.html`.
 
-![http.host filter results](./screenshots/task-4/ss2.png)
+![http.host filter results](./screenshots/task-4/task4-2.png)
 
-![Full URL with index.html confirmed](./screenshots/task-4/ss3.png)
+![Full URL with index.html confirmed](./screenshots/task-4/task4-3.png)
 
 ---
 
 **Step 3 — Identifying C2 Encoding and
 Communication Parameters**
 
-To investigate the C2 communication from
-the Stage 2 binary I applied the following
+To investigate the C2 communication from 
+the Stage 2 binary, I applied the following 
 Wireshark filter:
 
 ```
 http contains "resolvecyber"
 ```
 
-This filtered all HTTP traffic containing
-references to `resolvecyber` — the C2
-domain identified in Task 3. Examining
+This filtered all HTTP traffic containing 
+references to `resolvecyber`, the C2
+domain identified in Task 3. Examining 
 the resulting GET request revealed:
 
 - **Encoding used:** Base64 — the attacker
@@ -477,46 +476,45 @@ the resulting GET request revealed:
 - **URL used by binary:** `/9ab62b5`
 - **HTTP method:** GET
 
-![resolvecyber HTTP GET request](./screenshots/task-4/ss4.png)
+![resolvecyber HTTP GET request](./screenshots/task-4/task4-4.png)
 
 ---
 
 **Step 4 — Identifying the Programming Language**
 
-To gather more context about the malicious
-binary I right-clicked the relevant packet
-and selected **Follow TCP Stream**. Examining
-the full TCP stream content revealed that
-the binary was compiled using **Nim** — a
-systems programming language increasingly
-used by threat actors due to its ability
-to produce small, efficient executables
-that are less commonly detected by
+To gather more context about the malicious binary, I right-clicked the relevant packet 
+and selected **Follow TCP Stream**. Examining 
+the full TCP stream content revealed that 
+the binary was compiled using **Nim**, a 
+systems programming language increasingly 
+used by threat actors due to its ability 
+to produce small, efficient executables 
+that are less commonly detected by 
 security tools.
 
-![TCP stream revealing Nim as programming language](./screenshots/task-4/ss5.png)
+![TCP stream revealing Nim as programming language](./screenshots/task-4/task4-5.png)
 
 ---
 
 **Step 5 — Decoding the Encoded C2 Command**
 
-The Base64 encoded command found in the
-C2 GET request was extracted and decoded
-using CyberChef. The decoded output revealed
-the command being sent by the attacker
+The Base64-encoded command found in the
+C2 GET request was extracted and decoded 
+using CyberChef. The decoded output revealed 
+the command being sent by the attacker 
 through the C2 channel was:
 
 ```
 whoami - benimaru
 ```
 
-This is a standard attacker reconnaissance
-command used to confirm the identity and
-privilege level of the compromised account
+This is a standard attacker reconnaissance 
+command used to confirm the identity and 
+privilege level of the compromised account 
 immediately after establishing C2
 communication.
 
-![CyberChef decoding Base64 command to whoami](./screenshots/task-4/ss6.png)
+![CyberChef decoding Base64 command to whoami](./screenshots/task-4/task4-6.png)
 
 ---
 
@@ -546,30 +544,29 @@ communication.
 
 ### Analyst Notes
 
-The use of Base64 encoding for C2 commands
-over HTTP GET requests on port 80 is a
-deliberate layered evasion technique. The
-attacker combined three evasion methods
-simultaneously — standard HTTP protocol,
-common port 80, and encoded payloads — to
-blend malicious traffic with normal web
+The use of Base64 encoding for C2 commands 
+over HTTP GET requests on port 80 is a 
+deliberate layered evasion technique. The 
+attacker combined three evasion methods simultaneously: standard HTTP protocol, 
+common port 80, and encoded payloads to 
+blend malicious traffic with normal web 
 browsing activity.
 
 The `whoami` command as the first C2
-instruction is consistent with standard
-attacker post-exploitation behaviour.
-Confirming the identity and privilege level
-of the compromised account is the first
-step before deciding which escalation or
+instruction is consistent with standard 
+attacker post-exploitation behaviour. 
+Confirming the identity and privilege level 
+of the compromised account is the first 
+step before deciding which escalation or 
 lateral movement technique to pursue next.
 
-The identification of Nim as the compilation
-language is a significant threat intelligence
-finding. Nim-compiled binaries are
-increasingly used by threat actors because
-they produce executables with lower detection
-rates against traditional antivirus and EDR
-solutions compared to more commonly flagged
+The identification of Nim as the compilation 
+language is a significant threat intelligence 
+finding. Nim-compiled binaries are 
+increasingly used by threat actors because 
+they produce executables with lower detection 
+rates against traditional antivirus and EDR 
+solutions compared to more commonly flagged 
 languages like C or PowerShell.
 
 ---
@@ -578,13 +575,13 @@ languages like C or PowerShell.
 
 ### Overview
 
-With C2 communication established the attacker
-conducted internal discovery on the compromised
-machine. This task traces how the attacker
-identified a sensitive file and its password,
-discovered a listening port providing remote
-shell access, established a reverse proxy
-using Chisel, and authenticated to the machine
+With C2 communication established, the attacker 
+conducted internal discovery on the compromised 
+machine. This task traces how the attacker 
+identified a sensitive file and its password, 
+discovered a listening port providing remote 
+shell access, established a reverse proxy 
+using Chisel, and authenticated to the machine 
 using a specific Windows service.
 
 ---
@@ -593,88 +590,86 @@ using a specific Windows service.
 
 **Step 1 — Finding the Sensitive File Password**
 
-Returning to Wireshark I applied the following
-combined filter to isolate C2 GET requests
+Returning to Wireshark, I applied the following 
+combined filter to isolate C2 GET requests 
 to the resolvecyber domain:
 
 ```
 http.host == resolvecyber.xyz && http.request.method == "GET"
 ```
 
-This returned a number of packets containing
+This returned several packets containing
 Base64 encoded commands sent through the C2
 channel. Each packet was extracted and decoded 
-individually using CyberChef. Working through
-the decoded outputs one by one I identified
-a specific packet whose decoded content
+individually using CyberChef. Working through 
+the decoded outputs one by one, I identified 
+a specific packet whose decoded content 
 contained a password — `infernotempest` —
-revealing the password of the sensitive file
-discovered by the attacker on the compromised
+revealing the password of the sensitive file 
+discovered by the attacker on the compromised 
 machine.
 
-![Wireshark filter showing resolvecyber GET requests](./screenshots/task-5/ss1.png)
+![Wireshark filter showing resolvecyber GET requests](./screenshots/task-5/D1.png)
 
-![CyberChef decode revealing password infernotempest](./screenshots/task-5/ss2.png)
+![CyberChef decode revealing password infernotempest](./screenshots/task-5/D1.1.png)
 
 ---
 
 **Step 2 — Identifying the Listening Port**
 
-Continuing through the remaining encoded
-packets from the same Wireshark filter I
-identified another packet whose decoded
-content revealed a `netstat` command output.
-The decoded netstat results contained a list
-of active network connections, process IDs,
+Continuing through the remaining encoded 
+packets from the same Wireshark filter, I 
+identified another packet whose decoded 
+content revealed a `netstat` command output. 
+The decoded netstat results contained a list 
+of active network connections, process IDs, 
 and listening ports on the compromised machine.
 
-Analysing the output I identified the
-listening port providing remote shell access
-to the machine — PID 5985 — confirming an
-active listening service the attacker could
+Analysing the output, I identified the 
+listening port providing remote shell access 
+to the machine — PID 5985 — confirming an 
+active listening service the attacker could 
 use for remote access.
 
-![Wireshark packet containing encoded netstat output](./screenshots/task-5/ss3.png)
+![Wireshark packet containing encoded netstat output](./screenshots/task-5/D2.png)
 
-![CyberChef decode revealing netstat results and PID 5985](./screenshots/task-5/ss4.png)
+![CyberChef decode revealing netstat results and PID 5985](./screenshots/task-5/D2.1.png)
 
 ---
 
-**Step 3 — Finding the Reverse Proxy Command
+**Step 3 — Finding the Reverse Proxy Command 
 and SHA-256 Hash**
 
-Returning to Timeline Explorer I searched for
-the reverse proxy activity. Filtering for the
-SOCKS reverse proxy command returned the full
-command executed by the attacker to establish
-the Chisel reverse proxy connection — providing
-complete visibility into how the attacker
-tunnelled their C2 traffic through the
+Returning to Timeline Explorer, I searched for 
+the reverse proxy activity. Filtering for the 
+SOCKS reverse proxy command returned the full 
+command executed by the attacker to establish 
+the Chisel reverse proxy connection — providing 
+complete visibility into how the attacker 
+tunnelled their C2 traffic through the 
 compromised machine.
 
 The same filter also returned the SHA-256
-hash of the Chisel binary directly from the
+hash of the Chisel binary directly from the 
 Sysmon event data.
 
-![Timeline Explorer reverse proxy SOCKS command](./screenshots/task-5/ss5.png)
-
-![SHA-256 hash of Chisel binary in Timeline Explorer](./screenshots/task-5/ss6.png)
+![Timeline Explorer reverse proxy SOCKS command](./screenshots/task-5/D3.png)
 
 ---
 
 **Step 4 — Identifying the Tool Using VirusTotal**
 
-The SHA-256 hash of the binary was submitted
-to VirusTotal for threat intelligence lookup.
+The SHA-256 hash of the binary was submitted 
+to VirusTotal for threat intelligence lookup. 
 The results confirmed the binary as **Chisel**
-— a legitimate open-source TCP and UDP
-tunnelling tool written in Go that is
-increasingly abused by threat actors to
-establish reverse proxy connections and
-tunnel C2 traffic through compromised
+— a legitimate open-source TCP and UDP 
+tunnelling tool written in Go that is 
+increasingly abused by threat actors to 
+establish reverse proxy connections and 
+tunnel C2 traffic through compromised 
 endpoints.
 
-![VirusTotal results identifying Chisel](./screenshots/task-5/ss7.png)
+![VirusTotal results identifying Chisel](./screenshots/task-5/D4.png)
 
 ---
 
@@ -687,13 +682,13 @@ is associated with PowerShell remoting and
 WinRM-based authentication.
 
 The search confirmed that `wsmprovhost.exe`
-was the service used by the attacker to
-authenticate to the compromised machine —
+was the service used by the attacker to 
+authenticate to the compromised machine, 
 consistent with the listening port 5985
-identified in Step 2, which is the default
+identified in Step 2, which is the default 
 WinRM HTTP port.
 
-![wsmprovhost authentication service in Timeline Explorer](./screenshots/task-5/ss8.png)
+![wsmprovhost authentication service in Timeline Explorer](./screenshots/task-5/D5.png)
 
 ---
 
@@ -723,24 +718,22 @@ WinRM HTTP port.
 
 ### Analyst Notes
 
-The methodology of iterating through multiple
-Base64 encoded C2 packets and decoding each
-one individually was time consuming but
-essential. The attacker sent multiple commands
-through the C2 channel and the sensitive
-findings, the file password and the netstat
-output were not immediately obvious without
+The methodology of iterating through multiple Base64-encoded C2 packets and decoding each 
+one individually was time-consuming but 
+essential. The attacker sent multiple commands 
+through the C2 channel, and the sensitive 
+findings- the file password and the netstat 
+output were not immediately obvious without 
 working through all of them systematically.
 
-The identification of port `5985` alongside
+The identification of port `5985` alongside 
 wsmprovhost.exe is significant. Port `5985`
-is the default WinRM HTTP port used for
-PowerShell remoting. The attacker leveraged
+is the default WinRM HTTP port used for 
+PowerShell remoting. The attacker leveraged 
 WinRM as their authentication mechanism 
-a legitimate Windows service used to avoid
-raising suspicion. This is another example
-of living-off-the-land technique where
-built-in Windows services are abused for
+a legitimate Windows service used to avoid 
+raising suspicion. This is another example of a living-off-the-land technique where
+built-in Windows services are abused for 
 malicious purposes.
 
 The use of Chisel for reverse proxy 
@@ -788,7 +781,7 @@ SHA-256 hash of the downloaded binary,
 providing an immediate IOC for threat 
 intelligence lookup.
 
-![Timeline Explorer wsmprovhost filter showing spf.exe download and hash](./screenshots/task-6/ss1.png)
+![Timeline Explorer wsmprovhost filter showing spf.exe download and hash](./screenshots/task-6/privilege-1.png)
 
 ---
 
@@ -801,7 +794,7 @@ escalation tool developed by itm4n that
 abuses impersonation privileges through 
 the Windows printer spooler service.
 
-![VirusTotal results identifying PrintSpoofer](./screenshots/task-6/ss2.png)
+![VirusTotal results identifying PrintSpoofer](./screenshots/task-6/privilege-1.1.png)
 
 ---
 
@@ -815,10 +808,10 @@ that PrintSpoofer specifically abuses the ** SeImpersonatePrivilege **, a Window
 privilege that allows a process to impersonate 
 another user's security context.
 
-SeImpersonatePrivilege is commonly assigned
-to service accounts and is frequently found
-on compromised machines where the initial
-access was achieved through a web application
+SeImpersonatePrivilege is commonly assigned 
+to service accounts and is frequently found 
+on compromised machines where the initial 
+access was achieved through a web application 
 or service running under a limited account.
 PrintSpoofer exploits this privilege to 
 impersonate the SYSTEM account, achieving 
@@ -826,11 +819,30 @@ full administrative control of the machine.
 
 ---
 
+**Step 4 — Finding the Command Executed by 
+the Elevated Binary**
+
+To identify what command was executed by 
+the privilege escalation binary, I returned 
+to Timeline Explorer and filtered using
+`spf.exe` in the parent command info field.
+
+This returned the command executed by 
+PrintSpoofer following privilege escalation, revealing that `final.exe` was the binary 
+launched as a result of the privilege 
+escalation. This confirmed the next stage 
+of the attack and provided the filename 
+for subsequent investigation steps.
+
+![Timeline Explorer spf.exe parent command showing final.exe execution](./screenshots/task-6/privilege-2.png)
+
+---
+
 **Step 4 — Finding the C2 Port Used by
 the Elevated Binary**
 
 To identify the port used by the attacker 
-for the elevated C2 connection, I returned
+for the elevated C2 connection, I returned 
 to Wireshark and applied the following 
 combined filter:
 
@@ -846,7 +858,7 @@ in the packet list view. Examining the
 filtered results confirmed the elevated
 C2 connection was operating on port **8080**.
 
-![Wireshark filter showing elevated C2 on port 8080](./screenshots/task-6/ss3.png)
+![Wireshark filter showing elevated C2 on port 8080](./screenshots/task-6/privilege-3.png)
 
 ---
 
@@ -941,20 +953,20 @@ machine. The two accounts created were:
 - **shion**
 - **shuna**
 
-The commands also revealed that one of the
+The commands also revealed that one of the 
 account creation attempts had a missing
-`/add` option, confirming the attacker
+`/add` option, confirming the attacker 
 made an error during the account creation 
 process.
 
-![Timeline Explorer showing two user creation commands](./screenshots/task-7/ss1.png)
+![Timeline Explorer showing two user creation commands](./screenshots/task-7/final-1.png)
 
 ---
 
 **Step 2 — Finding the Group Addition Command**
 
 To identify which account was added to the 
-local administrators group I applied the 
+local administrators group, I applied the 
 following filters in Timeline Explorer:
 
 - Event ID: `1` — Process Create
@@ -978,7 +990,7 @@ local group addition is **4732**, confirming
 a member was added to a security-enabled
 local group.
 
-![Timeline Explorer showing net localgroup administrators command](./screenshots/task-7/ss2.png)
+![Timeline Explorer showing net localgroup administrators command](./screenshots/task-7/final-2.png)
 
 ---
 
@@ -1027,7 +1039,7 @@ are:
 | 4720 | A user account was created |
 | 4732 | A member was added to a security-enabled local group |
 
-![Timeline Explorer final.exe filter showing persistent service creation command](./screenshots/task-7/ss3.png)
+![Timeline Explorer final.exe filter showing persistent service creation command](./screenshots/task-7/Final-3.png)
 
 ---
 
@@ -1089,13 +1101,13 @@ timeline more completely.
 
 ## Investigation Summary
 
-This investigation successfully reconstructed
-the complete attack chain across all seven
+This investigation successfully reconstructed 
+the complete attack chain across all seven 
 phases of the Tempest compromise.
 
 | Task | Phase | Key Finding |
 |------|-------|-------------|
-| 1 | Preparation | Artefacts verified and analysis environment prepared |
+| 1 | Preparation | Artifacts verified and analysis environment prepared |
 | 2 | Initial Access | free_magicules.doc delivered via Chrome — PID 496 pivot |
 | 3 | Stage 2 | first.exe dropped — C2 to resolvecyber.xyz on port 80 |
 | 4 | C2 Traffic | Base64 encoded commands over HTTP GET — Nim compiled binary |

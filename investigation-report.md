@@ -426,7 +426,7 @@ confirmed the document was delivered over
 HTTP and provided the starting point for 
 identifying the full delivery URL.
 
-![HTTP filter showing free_magicules.doc packet](./screenshots/task-4/task4-1.png)
+![HTTP filter showing free_magicules.doc packet](./screenshots/task-4/task-4-1.png)
 
 ---
 
@@ -446,9 +446,9 @@ including the host `phishteam.xyz` and
 confirmed the complete delivery path 
 ending with `index.html`.
 
-![http.host filter results](./screenshots/task-4/task4-2.png)
+![http.host filter results](./screenshots/task-4/task-4-2.png)
 
-![Full URL with index.html confirmed](./screenshots/task-4/task4-3.png)
+![Full URL with index.html confirmed](./screenshots/task-4/task-4-3.png)
 
 ---
 
@@ -476,7 +476,7 @@ the resulting GET request revealed:
 - **URL used by binary:** `/9ab62b5`
 - **HTTP method:** GET
 
-![resolvecyber HTTP GET request](./screenshots/task-4/task4-4.png)
+![resolvecyber HTTP GET request](./screenshots/task-4/task-4-4.png)
 
 ---
 
@@ -492,7 +492,7 @@ to produce small, efficient executables
 that are less commonly detected by 
 security tools.
 
-![TCP stream revealing Nim as programming language](./screenshots/task-4/task4-5.png)
+![TCP stream revealing Nim as programming language](./screenshots/task-4/task-4-5.png)
 
 ---
 
@@ -514,7 +514,7 @@ privilege level of the compromised account
 immediately after establishing C2
 communication.
 
-![CyberChef decoding Base64 command to whoami](./screenshots/task-4/task4-6.png)
+![CyberChef decoding Base64 command to whoami](./screenshots/task-4/task-4-6.png)
 
 ---
 

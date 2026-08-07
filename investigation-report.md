@@ -788,7 +788,7 @@ intelligence lookup.
 
 The SHA-256 hash of `spf.exe` was submitted 
 to VirusTotal for threat intelligence lookup. 
-The results confirmed the binary as ** PrintSpoofer **, a well-known privilege-
+The results confirmed the binary as **PrintSpoofer**, a well-known privilege-
 escalation tool developed by itm4n that 
 abuses impersonation privileges through 
 the Windows printer spooler service.
